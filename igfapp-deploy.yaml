@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: igftools-app
+  labels:
+    app: igftools-app
+    env: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: igftools-app
+  template:
+    metadata:
+      labels:
+        app: igftools-app
+        env: dev
+    spec:
+      containers:
+        - name: igftools-app
+          image: imperialgenomicsfacility/metadata_validation_docker:kubev1
+          ports:
+          - containerPort: 8000
+          readinessProbe:
+            initialDelaySeconds: 30
+            timeoutSeconds: 10
+            httpGet:
+              path: /
+              port: 8000
+          livenessProbe:
+            initialDelaySeconds: 30
+            periodSeconds: 5
+            timeoutSeconds: 10
+            httpGet:
+              path: /
+              port: 8000
+          env:
+            - name: METADATA_SCHEMA
+              value: /home/vmuser/data-management-python/data/validation_schema/metadata_validation.json
+            - name: SAMPLESHEET_SCHEMA
+              value: /home/vmuser/data-management-python/data/validation_schema/samplesheet_validation.json
+            - name: DATABASE_URI
+              value: sqlite:////home/vmuser/data.sqlite
+            - name: FLASK_CONFIG
+              value: cloud
+            - name: PORT
+              value: "8000"
+            - name: RECAPTCHA_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: igfapp-key
+                  key: RECAPTCHA_PUBLIC_KEY
+            - name: RECAPTCHA_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: igfapp-key
+                  key: RECAPTCHA_PRIVATE_KEY
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: igfapp-key
+                  key: SECRET_KEY
